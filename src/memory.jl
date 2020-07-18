@@ -1,5 +1,3 @@
-
-
 struct Experience{T<:Real, V<:AbstractArray{T}, A, F}
     s::V
     a::A
@@ -26,13 +24,13 @@ Base.length(mem::PriorityReplayMemoryBuffer) = length(mem.experience)
 Base.size(mem::PriorityReplayMemoryBuffer) = length(mem)
 
 # Memory Control
-function addexp!(mem::PriorityReplayMemoryBuffer, Exp::Experience, reward=0.0)
+function addexp!(mem::PriorityReplayMemoryBuffer, Exp::Experience, priority=0.0)
     push!(mem.experience, Exp)
-    push!(mem.priorities, abs.(reward))
+    push!(mem.priorities, abs.(priority + mem.ϵ))
 end
 function addexp!(mem::PriorityReplayMemoryBuffer, s::AbstractArray{T}, a::A,
-                 r::F, s′::AbstractArray{T}, d::Bool, reward=0.0) where {T, A, F}
-    addexp!(mem, Experience(s, a, convert(Float32, r), s′, d), abs.(reward))
+                 r::F, s′::AbstractArray{T}, d::Bool, priority=0.0) where {T, A, F}
+    addexp!(mem, Experience(s, a, convert(Float32, r), s′, d), abs.(priority))
 end
 
 # Update priorities for selected indicies - updated while training

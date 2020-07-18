@@ -2,7 +2,7 @@
 
 function learn!(env::E, qpolicy::Q, num_eps, γ;
                 maxn=200, update_freq=3000, chkpt_freq=3000, replay_buffer_size=10000,
-                train_batch_size=1200, render=false) where {E<:Reinforce.AbstractEnvironment, Q<:QPolicy}
+                train_batch_size=1000, render=false, plot_freq=3000) where {E<:Reinforce.AbstractEnvironment, Q<:QPolicy}
     # Build an epsilon greedy policy for the learning
     π = ϵGreedyPolicy(1.0, qpolicy)
 
@@ -13,7 +13,7 @@ function learn!(env::E, qpolicy::Q, num_eps, γ;
     mem = PriorityReplayMemoryBuffer(replay_buffer_size)
 
     # ADAM Optimizer
-    opt = ADAM()
+    opt = ADAM(0.0001)
 
     # Standard Gradient Descent Optimizer
     # opt = Descent(0.001)
@@ -72,17 +72,13 @@ function learn!(env::E, qpolicy::Q, num_eps, γ;
             update_freq > 0 && step % update_freq == 0 && push!(losses, Flux.huber_loss(td_errs))
 
             # If desired, save the network
-            if chkpt_freq > 0 && step % chkpt_freq == 0
-                save_policy(qpolicy)
-                ## Plot the policy every other save
-                ## TODO: Add a function argument to handle frequency of plotting
-                render && step % (chkpt_freq*2) == 0 && PlotPolicy(qpolicy, 1000, 0)
-            end
+            chkpt_freq > 0 && step % chkpt_freq == 0 && save_policy(qpolicy)
+
+            # If desired, plot the policy
+            render && step % plot_freq == 0 && PlotPolicy(qpolicy, 1000, 0)
 
             # Record if this episode was successful
-            if finished(env, s′)
-                num_successes += 1
-            end
+            finished(env, s′) && (num_successes += 1)
 
             step += 1
         end # end of episode
