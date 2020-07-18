@@ -1,0 +1,4 @@
+name = "MooreDDQN"
+uuid = "a03c27cc-5316-478d-9505-9613f5ebe9dd"
+authors = ["Nicholas Moore <nsmoore57@gmail.com>"]
+version = "0.1.0"
