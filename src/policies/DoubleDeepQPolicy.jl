@@ -15,4 +15,4 @@ get_params(policy::Double_DeepQPolicy) = Flux.params(policy.primaryNetwork)
 
 update_target(policy::Double_DeepQPolicy) = Flux.loadparams!(policy.targetNetwork, Flux.params(policy.primaryNetwork))
 
-action(policy::MooreDDQN.DeepQPolicy, r, s::S, A) where {S <: Reinforce.AbstractState} = argmax(policy.primaryNetwork(s()))[1]
+action(policy::MooreDDQN.Double_DeepQPolicy, r, s::S, A) where {S} = argmax(policy.primaryNetwork(s()))[1]

@@ -33,7 +33,7 @@ function update_target(policy::DuelingDouble_DeepQPolicy)
 end
 
 # Only need to run the advantage network since everything else is the same regardless of action
-function action(policy::MooreDDQN.DuelingDouble_DeepQPolicy, r, s::S, A) where {S <: Reinforce.AbstractState}
+function action(policy::MooreDDQN.DuelingDouble_DeepQPolicy, r, s::S, A) where {S}
     baseresults = policy.primaryBaseNetwork(s())
     advantage = policy.primaryANetwork(baseresults)
     argmax(advantage)[1]

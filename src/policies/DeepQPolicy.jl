@@ -8,4 +8,4 @@ get_target(policy::DeepQPolicy, γ, r, done, s′) = dropdims(r .+ γ.*(1.0 .- d
 
 get_params(policy::DeepQPolicy) = Flux.params(policy.primaryNetwork)
 
-action(policy::MooreDDQN.DeepQPolicy, r, s::S, A) where {S <: Reinforce.AbstractState} = argmax(policy.primaryNetwork(s()))[1]
+action(policy::MooreDDQN.DeepQPolicy, r, s::S, A) where {S} = argmax(policy.primaryNetwork(s()))[1]
