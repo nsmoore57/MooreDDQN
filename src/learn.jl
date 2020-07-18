@@ -30,7 +30,7 @@ function learn!(env::E, qpolicy::Q, num_eps, γ;
 
         for (s, a, r, s′) ∈ ep
             # Save the step into the replay buffer
-            addexp!(mem, s(), a, r, s′(), finished(env, s′), r)
+            addexp!(mem, s(), a, r, s′(), finished(env, s′))
 
             # Fill the buffer before training or lowering ϵ
             length(mem) < train_batch_size && continue

@@ -10,6 +10,7 @@ mutable struct PriorityReplayMemoryBuffer{T}
     capacity::Int
     experience::CircularBuffer{Experience}
     priorities::CircularBuffer{T}
+    currentMax::T
     α
     β
     ϵ
@@ -17,25 +18,28 @@ mutable struct PriorityReplayMemoryBuffer{T}
 end
 
 # Constructor for Empty Memory
-PriorityReplayMemoryBuffer(n::Int; α=0.6, β=0.4, ϵ=1f-3) = PriorityReplayMemoryBuffer(n, CircularBuffer{Experience}(n), CircularBuffer{Float32}(n), α, β, ϵ, β)
+PriorityReplayMemoryBuffer(n::Int; α=0.6, β=0.4, ϵ=1f-3) = PriorityReplayMemoryBuffer(n, CircularBuffer{Experience}(n),
+                                                                                      CircularBuffer{Float32}(n), ϵ, α, β, ϵ, β)
 
 # Utility functions
 Base.length(mem::PriorityReplayMemoryBuffer) = length(mem.experience)
 Base.size(mem::PriorityReplayMemoryBuffer) = length(mem)
 
 # Memory Control
-function addexp!(mem::PriorityReplayMemoryBuffer, Exp::Experience, priority=0.0)
+function addexp!(mem::PriorityReplayMemoryBuffer, Exp::Experience)
     push!(mem.experience, Exp)
-    push!(mem.priorities, abs.(priority + mem.ϵ))
+    push!(mem.priorities, mem.currentMax)
 end
+
 function addexp!(mem::PriorityReplayMemoryBuffer, s::AbstractArray{T}, a::A,
-                 r::F, s′::AbstractArray{T}, d::Bool, priority=0.0) where {T, A, F}
-    addexp!(mem, Experience(s, a, convert(Float32, r), s′, d), abs.(priority))
+                 r::F, s′::AbstractArray{T}, d::Bool) where {T, A, F}
+    addexp!(mem, Experience(s, a, convert(Float32, r), s′, d))
 end
 
 # Update priorities for selected indicies - updated while training
 function update_priorities!(mem::PriorityReplayMemoryBuffer, ids::Vector{T}, td_errs::V ) where {T<:Int, V <: AbstractArray}
     mem.priorities[ids] = (abs.(td_errs) .+ mem.ϵ).^mem.α
+    mem.currentMax = max(mem.currentMax, maximum(mem.priorities[ids]))
 end
 
 # Sample from the buffer
