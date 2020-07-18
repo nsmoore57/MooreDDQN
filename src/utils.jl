@@ -3,11 +3,10 @@ function build_DeepQPolicy(env, num_actions; double=true, dueling=true)
         if dueling
             # Create a neural network
             # model = Dense(nfields(env.state), num_actions, σ)
-            primaryVNetwork = Chain(Dense(nfields(env.state), 10, σ),
-                                   Dense(10, 1))
-            primaryANetwork = Chain(Dense(nfields(env.state), 10, σ),
-                                    Dense(10, num_actions))
-            return DuelingDouble_DeepQPolicy(primaryVNetwork, primaryANetwork)
+            primaryBaseNetwork = Dense(nfields(env.state), 10, σ)
+            primaryVNetwork = Dense(10, 1)
+            primaryANetwork = Dense(10, num_actions)
+            return DuelingDouble_DeepQPolicy(primaryBaseNetwork, primaryVNetwork, primaryANetwork)
         else
             # Create a neural network
             # model = Dense(nfields(env.state), num_actions, σ)
