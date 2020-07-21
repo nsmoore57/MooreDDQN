@@ -13,11 +13,14 @@ import Reinforce: action, reset!, finished
 import StatsBase
 
 include("memory.jl")
-include("policies.jl")
-include("utils.jl")
-include("learn.jl")
+export ReplayMemoryBuffer, PriorityReplayMemoryBuffer
 
-export learn!, build_DeepQPolicy, action
-export get_QValues, get_target, get_params, update_target
+include("policies.jl")
+export QPolicy, ϵGreedyPolicy, DeepQPolicy, Double_DeepQPolicy, DuelingDouble_DeepQPolicy
+
+include("utils.jl")
+
+include("learn.jl")
+export learn!
 
 end # module

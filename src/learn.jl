@@ -1,15 +1,13 @@
-function learn!(env::E, qpolicy::Q, num_eps, γ;
-                maxn=200, opt=ADAM(0.0001), update_freq=3000, chkpt_freq=3000,
-                replay_buffer_size=10000, train_batch_size=1000, render=false,
-                plot_freq=3000) where {E<:Reinforce.AbstractEnvironment, Q<:QPolicy}
+function learn!(env::E, qpolicy::Q, mem::M, num_eps, γ;
+                maxn=200, opt=ADAM(0.0001), update_freq=3000, chkpt_freq=3000) where {E<:Reinforce.AbstractEnvironment,
+                                                                                      Q<:QPolicy,
+                                                                                      M<:ReplayMemoryBuffer}
     # Build an epsilon greedy policy for the learning
     π = ϵGreedyPolicy(1.0, qpolicy)
 
     # Track number of sucessful attempts
     num_successes = 0
 
-    # Replay Buffer
-    mem = PriorityReplayMemoryBuffer(replay_buffer_size)
 
     # Params to optimize
     p = get_params(qpolicy)
@@ -26,10 +24,10 @@ function learn!(env::E, qpolicy::Q, num_eps, γ;
             addexp!(mem, s(), a, r, s′(), finished(env, s′))
 
             # Fill the buffer before training or lowering ϵ
-            length(mem) < train_batch_size && continue
+            length(mem) < mem.batch_size && continue
 
             # Training
-            td_errs = trainWithBatch!(π, mem, train_batch_size, qpolicy, γ, p, opt)
+            td_errs = batchTrain!(π, mem, qpolicy, γ, p, opt)
 
             # If needed, update the target Network
             update_freq > 0 && step % update_freq == 0 && update_target(qpolicy)
@@ -37,9 +35,6 @@ function learn!(env::E, qpolicy::Q, num_eps, γ;
 
             # If desired, save the network
             chkpt_freq > 0 && step % chkpt_freq == 0 && save_policy(qpolicy)
-
-            # If desired, plot the policy
-            render && step % plot_freq == 0 && PlotPolicy(qpolicy, 1000, 0)
 
             # Record if this episode was successful
             finished(env, s′) && (num_successes += 1)
@@ -54,12 +49,12 @@ function learn!(env::E, qpolicy::Q, num_eps, γ;
     num_successes, losses
 end
 
-function trainWithBatch!(π, mem, train_batch_size, qpolicy, γ, params, opt)
+function batchTrain!(π, mem, qpolicy, γ, params, opt)
     # Decrease ϵ
     π.ϵ = 0.1
 
     # Sample a batch from the replay buffer
-    (s_batch, a_batch, r_batch, s′_batch, done_batch, ids, weights) = sample(mem, train_batch_size)
+    (s_batch, a_batch, r_batch, s′_batch, done_batch, ids, weights) = sample(mem)
 
     # Get the target values based on the next states
     target = get_target(qpolicy, γ, r_batch, done_batch, s′_batch)

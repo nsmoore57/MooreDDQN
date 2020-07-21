@@ -6,11 +6,14 @@ struct Experience{T<:Real, V<:AbstractArray{T}, A, F}
     done::Bool
 end
 
-mutable struct PriorityReplayMemoryBuffer{T}
+abstract type ReplayMemoryBuffer end
+
+mutable struct PriorityReplayMemoryBuffer{T} <: ReplayMemoryBuffer
     capacity::Int
     experience::CircularBuffer{Experience}
     priorities::CircularBuffer{T}
     currentMax::T
+    batch_size::Int
     α
     β
     ϵ
@@ -18,8 +21,9 @@ mutable struct PriorityReplayMemoryBuffer{T}
 end
 
 # Constructor for Empty Memory
-PriorityReplayMemoryBuffer(n::Int; α=0.6, β=0.4, ϵ=1f-3) = PriorityReplayMemoryBuffer(n, CircularBuffer{Experience}(n),
-                                                                                      CircularBuffer{Float32}(n), ϵ, α, β, ϵ, β)
+function PriorityReplayMemoryBuffer(n::Int, batch_size::Int; α=0.6, β=0.4, ϵ=1f-3)
+    PriorityReplayMemoryBuffer(n, CircularBuffer{Experience}(n), CircularBuffer{Float32}(n), ϵ, batch_size, α, β, ϵ, β)
+end
 
 # Utility functions
 Base.length(mem::PriorityReplayMemoryBuffer) = length(mem.experience)
@@ -43,8 +47,8 @@ function update_priorities!(mem::PriorityReplayMemoryBuffer, ids::Vector{T}, td_
 end
 
 # Sample from the buffer
-function StatsBase.sample(mem::PriorityReplayMemoryBuffer, num)
-    ids = sample(1:length(mem), Weights(mem.priorities) , num, replace=false)
+function StatsBase.sample(mem::PriorityReplayMemoryBuffer)
+    ids = sample(1:length(mem), Weights(mem.priorities) , mem.batch_size, replace=false)
     s = hcat((mem.experience[i].s for i in ids)...)
     r = hcat((mem.experience[i].r for i in ids)...)
     s′ = hcat((mem.experience[i].s′ for i in ids)...)
