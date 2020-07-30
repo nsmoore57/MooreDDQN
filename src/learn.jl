@@ -1,7 +1,8 @@
 function learn!(env::E, qpolicy::Q, mem::M, num_eps, γ;
-                maxn=200, opt=ADAM(0.0001), update_freq=3000, chkpt_freq=3000) where {E<:Reinforce.AbstractEnvironment,
-                                                                                      Q<:QPolicy,
-                                                                                      M<:ReplayMemoryBuffer}
+                maxn=200, opt=ADAM(0.0001), update_freq=3000, chkpt_freq=3000,
+                chkpt_filename="model_checkpoint.bson") where {E<:Reinforce.AbstractEnvironment,
+                                                               Q<:QPolicy,
+                                                               M<:ReplayMemoryBuffer}
     # Build an epsilon greedy policy for the learning
     π = ϵGreedyPolicy(1.0, qpolicy)
 
@@ -45,7 +46,7 @@ function learn!(env::E, qpolicy::Q, mem::M, num_eps, γ;
         # Anneal β linearly toward 1.0
         mem.β -= (1.0 - mem.β0)/num_eps
     end
-    chkpt_freq > 0 && save_policy(qpolicy)
+    chkpt_freq > 0 && save_policy(qpolicy, chkpt_filename)
     num_successes, losses
 end
 

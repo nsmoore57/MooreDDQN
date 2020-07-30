@@ -16,7 +16,7 @@ include("memory.jl")
 export ReplayMemoryBuffer, PriorityReplayMemoryBuffer
 
 include("policies.jl")
-export QPolicy, ϵGreedyPolicy, DeepQPolicy, Double_DeepQPolicy, DuelingDouble_DeepQPolicy
+export QPolicy, ϵGreedyPolicy, DeepQPolicy, Double_DeepQPolicy, DuelingDouble_DeepQPolicy, reset!
 
 include("utils.jl")
 
