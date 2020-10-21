@@ -18,6 +18,9 @@ export ReplayMemoryBuffer, PriorityReplayMemoryBuffer
 include("policies.jl")
 export QPolicy, ϵGreedyPolicy, DeepQPolicy, Double_DeepQPolicy, DuelingDouble_DeepQPolicy, reset!
 
+include("decreaser.jl")
+export ConstantDecreaser,ExponentialDecreaser,HeavisideDecreaser,ArithmeticDescreaser,LinearDescreaser
+
 include("utils.jl")
 
 include("learn.jl")
