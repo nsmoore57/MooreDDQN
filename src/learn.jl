@@ -1,12 +1,12 @@
 function learn!(env::E, qpolicy::Q, mem::M, num_eps, γ;
-                maxn=200, opt=ADAM(0.0001), update_freq=3000, chkpt_freq=3000,
+                maxn=200, opt=ADAM(0.00001), update_freq=3000, chkpt_freq=3000,
                 chkpt_filename="model_checkpoint.bson", cb_ep = () -> (),
                 cb_step = () -> ()) where {E<:Reinforce.AbstractEnvironment,
                                                                Q<:QPolicy,
                                                                M<:ReplayMemoryBuffer}
 
     # Build an epsilon greedy policy for the learning
-    π = ϵGreedyPolicy(1.0, qpolicy)
+    π = ϵGreedyPolicy(LinearSequence(1.,0.01,num_eps*50,iter=0), qpolicy)
 
     # Track number of sucessful attempts
     num_successes = 0
@@ -26,7 +26,10 @@ function learn!(env::E, qpolicy::Q, mem::M, num_eps, γ;
             addexp!(mem, s(), a, r, s′(), finished(env, s′))
 
             # Fill the buffer before training or lowering ϵ
-            length(mem) < mem.batch_size && continue
+            if length(mem) < mem.batch_size
+                cb_step()
+                continue
+            end
 
             # Training
             td_errs = batchTrain!(π, mem, qpolicy, γ, p, opt)
@@ -48,8 +51,8 @@ function learn!(env::E, qpolicy::Q, mem::M, num_eps, γ;
 
         end # end of episode
 
-        # Anneal β linearly toward 1.0
-        mem.β -= (1.0 - mem.β0)/num_eps
+        # Change β
+        update_β!(mem)
 
         # Run the episode callback
         cb_ep()
@@ -60,7 +63,7 @@ end
 
 function batchTrain!(π, mem, qpolicy, γ, params, opt)
     # Decrease ϵ
-    π.ϵ = 0.1
+    update_ϵ!(π)
 
     # Sample a batch from the replay buffer
     (s_batch, a_batch, r_batch, s′_batch, done_batch, ids, weights) = sample(mem)

@@ -8,21 +8,20 @@ end
 
 abstract type ReplayMemoryBuffer end
 
-mutable struct PriorityReplayMemoryBuffer{T} <: ReplayMemoryBuffer
+mutable struct PriorityReplayMemoryBuffer{T, S<:Sequence} <: ReplayMemoryBuffer
     capacity::Int
     experience::CircularBuffer{Experience}
     priorities::CircularBuffer{T}
     currentMax::T
     batch_size::Int
-    α
-    β
-    ϵ
-    β0
+    α::Float32
+    β::S
+    ϵ::Float32
 end
 
 # Constructor for Empty Memory
-function PriorityReplayMemoryBuffer(n::Int, batch_size::Int; α=0.6, β=0.4, ϵ=1f-3)
-    PriorityReplayMemoryBuffer(n, CircularBuffer{Experience}(n), CircularBuffer{Float32}(n), ϵ, batch_size, α, β, ϵ, β)
+function PriorityReplayMemoryBuffer(n::Int, batch_size::Int; β::D, α=5f-1, ϵ=1f-3) where {D<:Sequence}
+    PriorityReplayMemoryBuffer(n, CircularBuffer{Experience}(n), CircularBuffer{Float32}(n), ϵ, batch_size, α, β, ϵ)
 end
 
 # Utility functions
@@ -40,6 +39,9 @@ function addexp!(mem::PriorityReplayMemoryBuffer, s::AbstractArray{T}, a::A,
     addexp!(mem, Experience(s, a, convert(Float32, r), s′, d))
 end
 
+# Parameter Control
+update_β!(mem::PriorityReplayMemoryBuffer) = step!(mem.β)
+
 # Update priorities for selected indicies - updated while training
 function update_priorities!(mem::PriorityReplayMemoryBuffer, ids::Vector{T}, td_errs::V ) where {T<:Int, V <: AbstractArray}
     mem.priorities[ids] = (abs.(td_errs) .+ mem.ϵ).^mem.α
@@ -54,7 +56,7 @@ function StatsBase.sample(mem::PriorityReplayMemoryBuffer)
     s′ = hcat((mem.experience[i].s′ for i in ids)...)
     d = hcat((mem.experience[i].done for i in ids)...)
     weights = mem.priorities[ids] ./ sum(mem.priorities)
-    weights = (length(mem)*weights).^(-mem.β)
+    weights = (length(mem)*weights).^(-value(mem.β))
     weights = weights ./ maximum(weights)
 
     # Actions need to be converted to Cartesian indices so that they address

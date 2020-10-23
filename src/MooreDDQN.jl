@@ -12,14 +12,14 @@ using Reinforce
 import Reinforce: action, reset!, finished
 import StatsBase
 
+include("sequences.jl")
+export ConstantSequence,ExponentialSequence,HeavisideSequence,ArithmeticSequence,LinearSequence
+
 include("memory.jl")
 export ReplayMemoryBuffer, PriorityReplayMemoryBuffer
 
 include("policies.jl")
-export QPolicy, ϵGreedyPolicy, DeepQPolicy, Double_DeepQPolicy, DuelingDouble_DeepQPolicy, reset!
-
-include("decreaser.jl")
-export ConstantDecreaser,ExponentialDecreaser,HeavisideDecreaser,ArithmeticDescreaser,LinearDescreaser
+export QPolicy, ϵGreedyPolicy, DeepQPolicy, Double_DeepQPolicy, DuelingDouble_DeepQPolicy, reset!, save_policy, load_policy
 
 include("utils.jl")
 
