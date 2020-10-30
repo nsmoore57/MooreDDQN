@@ -1,7 +1,7 @@
 function learn!(env::E, qpolicy::Q, mem::M, num_eps, γ;
                 maxn=200, opt=ADAM(0.00001), update_freq=3000, chkpt_freq=3000,
                 chkpt_filename="model_checkpoint.bson", cb_ep = () -> (),
-                cb_step = () -> ()) where {E<:Reinforce.AbstractEnvironment,
+                cb_step = () -> (), show_progress=true) where {E<:Reinforce.AbstractEnvironment,
                                                                Q<:QPolicy,
                                                                M<:ReplayMemoryBuffer}
 
@@ -18,7 +18,8 @@ function learn!(env::E, qpolicy::Q, mem::M, num_eps, γ;
 
     # Track the number of training steps completed so far
     step = 1
-    @showprogress 3 "Learning..." for i ∈ 1:num_eps
+    show_progress && (progress = Progress(num_eps, 3))
+    for i ∈ 1:num_eps
         ep = Episode(env, π; maxn = maxn)
 
         for (s, a, r, s′) ∈ ep
@@ -56,6 +57,9 @@ function learn!(env::E, qpolicy::Q, mem::M, num_eps, γ;
 
         # Run the episode callback
         cb_ep()
+
+        # Update the progress
+        show_progress && next!(progress)
     end
     chkpt_freq > 0 && save_policy(qpolicy, chkpt_filename)
     num_successes, losses
