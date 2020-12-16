@@ -84,7 +84,7 @@ function batchTrain!(π, mem, qpolicy, γ, params, opt)
     # Track gradients while calculating the loss
     gs = Flux.gradient(params) do
         currentQ_SA = get_QValues(qpolicy, s_batch)[a_batch]
-        td_errs = currentQ_SA .- target
+        td_errs = target .- currentQ_SA
         loss = Flux.huber_loss(td_errs.*weights)
     end
 

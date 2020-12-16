@@ -45,7 +45,7 @@ update_β!(mem::PriorityReplayMemoryBuffer) = step!(mem.β)
 # Update priorities for selected indicies - updated while training
 function update_priorities!(mem::PriorityReplayMemoryBuffer, ids::Vector{T}, td_errs::V ) where {T<:Int, V <: AbstractArray}
     mem.priorities[ids] = (abs.(td_errs) .+ mem.ϵ).^mem.α
-    mem.currentMax = max(mem.currentMax, maximum(mem.priorities[ids]))
+    mem.currentMax = maximum(mem.priorities)
 end
 
 # Sample from the buffer
