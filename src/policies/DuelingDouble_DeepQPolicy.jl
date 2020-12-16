@@ -12,10 +12,12 @@ DuelingDouble_DeepQPolicy(primaryBase, primaryV, primaryA) = DuelingDouble_DeepQ
 function get_QValues(policy::DuelingDouble_DeepQPolicy, inputs; primary=true)
     if primary
         baseresults = policy.primaryBaseNetwork(inputs)
-        return policy.primaryVNetwork(baseresults) .+ policy.primaryANetwork(baseresults) .- mean(policy.primaryANetwork(baseresults), dims=1)
+        Aresults = policy.primaryANetwork(baseresults)
+        return policy.primaryVNetwork(baseresults) .+ Aresults .- mean(Aresults, dims=1)
     else
         baseresults = policy.targetBaseNetwork(inputs)
-        return policy.targetVNetwork(baseresults) .+ policy.targetANetwork(baseresults) .- mean(policy.targetANetwork(baseresults), dims=1)
+        Aresults = policy.targetANetwork(baseresults)
+        return policy.targetVNetwork(baseresults) .+ Aresults .- mean(Aresults, dims=1)
     end
 end
 
