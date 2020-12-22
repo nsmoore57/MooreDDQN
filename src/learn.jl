@@ -1,12 +1,13 @@
 function learn!(env::E, qpolicy::Q, mem::M, num_eps, γ;
                 maxn=200, opt=ADAM(0.00001), update_freq=3000, chkpt_freq=3000,
-                chkpt_filename="model_checkpoint.bson", cb_ep = () -> (),
-                cb_step = () -> (), show_progress=true) where {E<:Reinforce.AbstractEnvironment,
-                                                               Q<:QPolicy,
-                                                               M<:ReplayMemoryBuffer}
+                train_freq=100, chkpt_filename="model_checkpoint.bson", 
+                cb_ep = () -> (), cb_step = () -> (), 
+                show_progress=true) where {E<:Reinforce.AbstractEnvironment,
+                                           Q<:QPolicy,
+                                           M<:ReplayMemoryBuffer}
 
     # Build an epsilon greedy policy for the learning
-    π = ϵGreedyPolicy(LinearSequence(1.,0.01,num_eps*50,iter=0), qpolicy)
+    π = ϵGreedyPolicy(LinearSequence(0.01,0.01,num_eps,iter=0), qpolicy)
 
     # Track number of sucessful attempts
     num_successes = 0
@@ -28,12 +29,15 @@ function learn!(env::E, qpolicy::Q, mem::M, num_eps, γ;
 
             # Fill the buffer before training or lowering ϵ
             if length(mem) < mem.batch_size
-                cb_step()
+                # cb_step()
                 continue
             end
 
-            # Training
-            td_errs = batchTrain!(π, mem, qpolicy, γ, p, opt)
+            # Training - every train_freq steps
+            if step % train_freq == 0
+                td_errs = batchTrain!(π, mem, qpolicy, γ, p, opt)
+                cb_step()
+            end
 
             # If needed, update the target Network
             update_freq > 0 && step % update_freq == 0 && update_target(qpolicy)
@@ -48,7 +52,7 @@ function learn!(env::E, qpolicy::Q, mem::M, num_eps, γ;
             step += 1
 
             # Run the step callback
-            cb_step()
+            # cb_step()
 
         end # end of episode
 
