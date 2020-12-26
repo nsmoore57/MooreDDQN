@@ -18,7 +18,7 @@ function learn!(env::E, qpolicy::Q, mem::M, num_eps, γ;
     losses = Float64[]
 
     # Track the number of training steps completed so far
-    step = 1
+    numStepsCompleted = 1
     show_progress && (progress = Progress(num_eps, 3))
     for i ∈ 1:num_eps
         ep = Episode(env, π; maxn = maxn)
@@ -34,22 +34,22 @@ function learn!(env::E, qpolicy::Q, mem::M, num_eps, γ;
             end
 
             # Training - every train_freq steps
-            if step % train_freq == 0
+            if numStepsCompleted % train_freq == 0
                 td_errs = batchTrain!(π, mem, qpolicy, γ, p, opt)
                 cb_step()
             end
 
             # If needed, update the target Network
-            update_freq > 0 && step % update_freq == 0 && update_target(qpolicy)
-            update_freq > 0 && step % update_freq == 0 && push!(losses, Flux.huber_loss(td_errs))
+            update_freq > 0 && numStepsCompleted % update_freq == 0 && update_target(qpolicy)
+            # update_freq > 0 && numStepsCompleted % update_freq == 0 && push!(losses, Flux.huber_loss(td_errs))
 
             # If desired, save the network
-            chkpt_freq > 0 && step % chkpt_freq == 0 && save_policy(qpolicy)
+            chkpt_freq > 0 && numStepsCompleted % chkpt_freq == 0 && save_policy(qpolicy)
 
             # Record if this episode was successful
             finished(env, s′) && (num_successes += 1)
 
-            step += 1
+            numStepsCompleted += 1
 
             # Run the step callback
             # cb_step()
